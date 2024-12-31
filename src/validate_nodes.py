@@ -8,10 +8,7 @@ import os
 
 class BreakingChangeType(Enum):
     RETURN_TYPES_CHANGED = "Return types changed"
-    INPUT_REMOVED = "Required input removed"
-    INPUT_TYPE_CHANGED = "Input type changed"
     NODE_REMOVED = "Node removed"
-    FUNCTION_CHANGED = "Entry point function changed"
 
 @dataclass
 class BreakingChange:
@@ -104,24 +101,6 @@ def compare_return_types(node_name: str, base_class: Type, pr_class: Type) -> li
 
     return changes
 
-def compare_function(node_name: str, base_class: Type, pr_class: Type) -> list[BreakingChange]:
-    """Compare FUNCTION attribute between base and PR versions of a node."""
-    changes = []
-    
-    base_function = getattr(base_class, "FUNCTION", None)
-    pr_function = getattr(pr_class, "FUNCTION", None)
-    
-    if base_function != pr_function:
-        changes.append(BreakingChange(
-            node_name=node_name,
-            change_type=BreakingChangeType.FUNCTION_CHANGED,
-            details="Entry point function changed",
-            base_value=base_function,
-            pr_value=pr_function
-        ))
-    
-    return changes
-
 def compare_nodes(base_nodes: Dict[str, Type], pr_nodes: Dict[str, Type]) -> list[BreakingChange]:
     """Compare two versions of nodes for breaking changes."""
     changes = []
@@ -140,7 +119,6 @@ def compare_nodes(base_nodes: Dict[str, Type], pr_nodes: Dict[str, Type]) -> lis
         pr_class = pr_nodes[node_name]
         
         changes.extend(compare_return_types(node_name, base_class, pr_class))
-        changes.extend(compare_function(node_name, base_class, pr_class))
     
     return changes
 
