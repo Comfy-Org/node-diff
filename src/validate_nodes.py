@@ -8,7 +8,6 @@ import os
 
 class BreakingChangeType(Enum):
     RETURN_TYPES_CHANGED = "Return types changed"
-    RETURN_TYPES_REORDERED = "Return types reordered"
     INPUT_REMOVED = "Required input removed"
     INPUT_TYPE_CHANGED = "Input type changed"
     NODE_REMOVED = "Node removed"
@@ -91,36 +90,17 @@ def compare_return_types(node_name: str, base_class: Type, pr_class: Type) -> li
     base_types = getattr(base_class, "RETURN_TYPES", tuple())
     pr_types = getattr(pr_class, "RETURN_TYPES", tuple())
 
-    if len(base_types) != len(pr_types):
-        changes.append(BreakingChange(
-            node_name=node_name,
-            change_type=BreakingChangeType.RETURN_TYPES_CHANGED,
-            details=f"Number of return types changed from {len(base_types)} to {len(pr_types)}",
-            base_value=base_types,
-            pr_value=pr_types
-        ))
-        return changes
-
-    # Check for type changes and reordering
-    base_types_set = set(base_types)
-    pr_types_set = set(pr_types)
-    
-    if base_types_set != pr_types_set:
-        changes.append(BreakingChange(
-            node_name=node_name,
-            change_type=BreakingChangeType.RETURN_TYPES_CHANGED,
-            details="Return types changed",
-            base_value=base_types,
-            pr_value=pr_types
-        ))
-    elif base_types != pr_types:
-        changes.append(BreakingChange(
-            node_name=node_name,
-            change_type=BreakingChangeType.RETURN_TYPES_REORDERED,
-            details="Return types were reordered",
-            base_value=base_types,
-            pr_value=pr_types
-        ))
+    # Check if all base return types are preserved in PR
+    for i, base_type in enumerate(base_types):
+        if i >= len(pr_types) or pr_types[i] != base_type:
+            changes.append(BreakingChange(
+                node_name=node_name,
+                change_type=BreakingChangeType.RETURN_TYPES_CHANGED,
+                details="Return types changed or removed. This is a breaking change.",
+                base_value=base_types,
+                pr_value=pr_types
+            ))
+            return changes
 
     return changes
 
