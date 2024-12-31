@@ -28,15 +28,26 @@ def load_node_mappings(repo_path: str) -> Dict[str, Type]:
     """
     init_path = os.path.join(repo_path, "__init__.py")
     
+    print(f"Debug: Loading from init_path: {init_path}")
+    print(f"Debug: Repository path: {repo_path}")
+    
     if not os.path.exists(init_path):
         raise FileNotFoundError(f"Could not find __init__.py in {repo_path}")
     
-    # Add the repo path to system path temporarily
-    sys.path.insert(0, os.path.dirname(repo_path))
+    # Add the repo path itself to system path (not its parent)
+    sys.path.insert(0, repo_path)
+    print(f"Debug: Python path after insert: {sys.path[0]}")
+    print(f"Debug: Full sys.path: {sys.path}")
     
     try:
         # Generate a unique module name based on the path
         module_name = f"custom_nodes_{Path(repo_path).name}"
+        print(f"Debug: Generated module name: {module_name}")
+        
+        # List directory contents
+        print(f"Debug: Directory contents of {repo_path}:")
+        for item in os.listdir(repo_path):
+            print(f"  - {item}")
         
         # Load the module
         spec = importlib.util.spec_from_file_location(module_name, init_path)
@@ -44,18 +55,30 @@ def load_node_mappings(repo_path: str) -> Dict[str, Type]:
             raise ImportError(f"Failed to load module from {init_path}")
         
         module = importlib.util.module_from_spec(spec)
+        # Register the module in sys.modules
+        sys.modules[module_name] = module
+        print(f"Debug: Created module object: {module}")
+        
         spec.loader.exec_module(module)
+        print("Debug: Successfully executed module")
         
         # Get NODE_CLASS_MAPPINGS
         mappings = getattr(module, "NODE_CLASS_MAPPINGS", {})
+        print(f"Debug: Found mappings: {bool(mappings)}")
+        
         if not mappings:
             raise AttributeError("NODE_CLASS_MAPPINGS not found in __init__.py")
             
         return mappings
-    
+    except Exception as e:
+        print(f"Debug: Exception occurred: {str(e)}")
+        print(f"Debug: Exception type: {type(e)}")
+        raise
     finally:
-        # Remove the temporary path
+        # Remove the temporary path and cleanup sys.modules
         sys.path.pop(0)
+        if module_name in sys.modules:
+            del sys.modules[module_name]
 
 
 def get_node_classes(module) -> Dict[str, Type]:
