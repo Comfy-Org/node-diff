@@ -104,37 +104,6 @@ def compare_return_types(node_name: str, base_class: Type, pr_class: Type) -> li
 
     return changes
 
-def compare_input_types(node_name: str, base_class: Type, pr_class: Type) -> list[BreakingChange]:
-    """Compare INPUT_TYPES between base and PR versions of a node."""
-    changes = []
-    
-    base_inputs = base_class.INPUT_TYPES().get("required", {})
-    pr_inputs = pr_class.INPUT_TYPES().get("required", {})
-
-    # Check for removed inputs
-    for input_name, input_config in base_inputs.items():
-        if input_name not in pr_inputs:
-            changes.append(BreakingChange(
-                node_name=node_name,
-                change_type=BreakingChangeType.INPUT_REMOVED,
-                details=f"Required input '{input_name}' was removed",
-                base_value=input_config,
-                pr_value=None
-            ))
-            continue
-
-        # Check input type changes
-        if pr_inputs[input_name][0] != input_config[0]:
-            changes.append(BreakingChange(
-                node_name=node_name,
-                change_type=BreakingChangeType.INPUT_TYPE_CHANGED,
-                details=f"Input type changed for '{input_name}'",
-                base_value=input_config[0],
-                pr_value=pr_inputs[input_name][0]
-            ))
-
-    return changes
-
 def compare_function(node_name: str, base_class: Type, pr_class: Type) -> list[BreakingChange]:
     """Compare FUNCTION attribute between base and PR versions of a node."""
     changes = []
@@ -171,7 +140,6 @@ def compare_nodes(base_nodes: Dict[str, Type], pr_nodes: Dict[str, Type]) -> lis
         pr_class = pr_nodes[node_name]
         
         changes.extend(compare_return_types(node_name, base_class, pr_class))
-        changes.extend(compare_input_types(node_name, base_class, pr_class))
         changes.extend(compare_function(node_name, base_class, pr_class))
     
     return changes
