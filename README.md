@@ -8,6 +8,11 @@ This action checks out your PR branch and your main branch and compares the cust
 
 This helps you develop custom nodes that don't break existing workflows.
 
+## Features
+
+- [x] Checks `RETURN_TYPES`
+- [ ] Checks `INPUT_TYPES`
+
 ## Usage
 
 Just add this to your custom node repo: `.github/workflows/validate.yml`
