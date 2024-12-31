@@ -35,8 +35,11 @@ def load_node_mappings(repo_path: str) -> Dict[str, Type]:
     sys.path.insert(0, os.path.dirname(repo_path))
     
     try:
+        # Generate a unique module name based on the path
+        module_name = f"custom_nodes_{Path(repo_path).name}"
+        
         # Load the module
-        spec = importlib.util.spec_from_file_location("module", init_path)
+        spec = importlib.util.spec_from_file_location(module_name, init_path)
         if spec is None or spec.loader is None:
             raise ImportError(f"Failed to load module from {init_path}")
         
